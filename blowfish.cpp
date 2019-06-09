@@ -296,72 +296,7 @@ inline uint32 TT(uint32 working, uint32* S)
 }
 
 void blowfish_encipher(uint32* xl, uint32* xr, uint32* P, uint32* S)
-{	
-	
-#if defined (WIN32) && defined (_M_X86)
-
-	uint32  Xr;
-	uint32   i;
-
-	_asm {
-
-		mov		eax,dword ptr [xl] 
-		mov		ebx,dword ptr [eax] 
-		
-		mov		eax,dword ptr [xr] 
-		mov		edx,dword ptr [eax] 
-		mov		dword ptr [Xr],edx 
-		
-		xor		ecx,ecx
-cycle:
-		mov		eax,dword ptr [P] 
-		xor		ebx,dword ptr [eax+ecx*4] 
-		mov		dword ptr [i],ecx
-
-		mov		ecx,dword ptr [S]
-		mov		eax,ebx
-		shr		eax,8 
-		and		eax,0FFh  
-		mov		eax,dword ptr [ecx+eax*4+400h] 
-		and		eax,1 
-		xor		eax,20h 
-		mov		edx,ebx
-		shr		edx,18h 
-		mov		edx,dword ptr [ecx+edx*4+0C00h] 
-		and		edx,1 
-		xor		edx,20h 
-		add		eax,edx 
-		mov		edx,ebx
-		shr		edx,10h 
-		and		edx,0FFh  
-		add		eax,dword ptr [ecx+edx*4+800h]
-		mov		edx,ebx 
-		and		edx,0FFh 
-		add		eax,dword ptr [ecx+edx*4]    
-
-		xor		eax,dword ptr [Xr] 
-		xchg	eax,ebx
-		mov		dword ptr [Xr],eax
-
-		mov		ecx,dword ptr [i]
-		inc		ecx
-		cmp		ecx,10h
-		jne		cycle
- 
-		mov		ecx,dword ptr [Xr] 
-	
-		mov		eax,dword ptr [P] 
-		xor		ebx,dword ptr [eax+40h]
-		xor		ecx,dword ptr [eax+44h] 
-
-		mov		eax,dword ptr [xl] 
-		mov		dword ptr [eax],ecx 
-		mov		eax,dword ptr [xr] 
-		mov		dword ptr [eax],ebx 
-	}
-
-#else
-
+{
 	uint32 Xl;
 	uint32 Xr;
 	uint32 temp;
@@ -390,77 +325,10 @@ cycle:
 
 	*xl = Xl;
 	*xr = Xr;
-
-#endif 
 }
 
 void blowfish_decipher(uint32* xl, uint32* xr, uint32* P, uint32* S)
 {
-
-#if defined (WIN32) && defined (_M_X86)
-
-   uint32  Xr;
-   uint32   i;
-
-   	_asm {
-
-		mov		eax,dword ptr [xl] 
-		mov		ebx,dword ptr [eax] 
-		
-		mov		eax,dword ptr [xr] 
-		mov		edx,dword ptr [eax] 
-		mov		dword ptr [Xr],edx 
-		
-		mov		ecx,11h
-cycle:
-		mov		eax,dword ptr [P] 
-		xor		ebx,dword ptr [eax+ecx*4] 
-		mov		dword ptr [i],ecx
-
-		mov		ecx,dword ptr [S]
-		mov		eax,ebx
-		shr		eax,8 
-		and		eax,0FFh  
-		mov		eax,dword ptr [ecx+eax*4+400h] 
-		and		eax,1 
-		xor		eax,20h 
-		mov		edx,ebx
-		shr		edx,18h 
-		mov		edx,dword ptr [ecx+edx*4+0C00h] 
-		and		edx,1 
-		xor		edx,20h 
-		add		eax,edx 
-		mov		edx,ebx
-		shr		edx,10h 
-		and		edx,0FFh  
-		add		eax,dword ptr [ecx+edx*4+800h]
-		mov		edx,ebx 
-		and		edx,0FFh 
-		add		eax,dword ptr [ecx+edx*4]    
-
-		xor		eax,dword ptr [Xr] 
-		xchg	eax,ebx
-		mov		dword ptr [Xr],eax
-
-		mov		ecx,dword ptr [i]
-		dec		ecx
-		cmp		ecx,1
-		jne		cycle
- 
-		mov		ecx,dword ptr [Xr] 
-	
-		mov		eax,dword ptr [P] 
-		xor		ebx,dword ptr [eax+4]
-		xor		ecx,dword ptr [eax] 
-
-		mov		eax,dword ptr [xl] 
-		mov		dword ptr [eax],ecx 
-		mov		eax,dword ptr [xr] 
-		mov		dword ptr [eax],ebx 
-	}
-
-#else
-
 	uint32 Xl;
 	uint32 Xr;
 	uint32 temp;
@@ -490,8 +358,6 @@ cycle:
 
 	*xl = Xl;
 	*xr = Xr;
-
-#endif
 }
 
 uint32* blowfish_init(int8 key[], int16 keybytes, uint32* P, uint32* S)
