@@ -274,7 +274,7 @@ func TT(working uint32, S []uint32) uint32 {
     return v1 + v2 + v3 + S[working &0xFF]
 }
 
-func encipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
+func Encipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
     Xl = xl
     Xr = xr
     for i:=0; i < N; i++ {
@@ -292,7 +292,7 @@ func encipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
     return
 }
 
-func decipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
+func Decipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
     Xl = xl
     Xr = xr
     for i:=N+1; i> 1; i-- {
@@ -310,7 +310,7 @@ func decipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
     return
 }
 
-func blowfish_init(key []int8, keybytes int16) ( P []uint32, S []uint32) {
+func Blowfish_init(key []int8, keybytes int) ( P []uint32, S []uint32) {
     //memcpy(P, subkey, 72); -> 18 uint32
     P = make( []uint32, 18 )
     for i:=0; i < 18; i++ {
@@ -324,7 +324,7 @@ func blowfish_init(key []int8, keybytes int16) ( P []uint32, S []uint32) {
         S[i] = uint32( subkey[72+ i*4 ])  + uint32(subkey[72+ i*4 +1 ]<<8) +
             uint32(subkey[72 + i*4+2 ]<<16) + uint32(subkey[72 + i*4 + 3]<<24)
     }
-    var j int16 = 0
+    var j int = 0
     for i:=0; i < N + 2; i++ {
         var data uint32 = 0
         for k:= 0; k < 4; k++ {
@@ -339,13 +339,13 @@ func blowfish_init(key []int8, keybytes int16) ( P []uint32, S []uint32) {
     }
     var datal, datar uint32 = 0, 0
     for i:=0; i < N + 2; i = i +2 {
-        datal, datar = encipher( datal, datar, P, S)
+        datal, datar = Encipher( datal, datar, P, S)
         P[i] = datal
         P[i+1] = datar
     }
     for i := 0; i < 4; i++ {
         for j:=0; j < 256; j = j+2 {
-            datal, datar = encipher( datal, datar, P, S)
+            datal, datar = Encipher( datal, datar, P, S)
             S[i*256 + j   ] = datal
             S[i*256 + j+1 ] = datar
         }
