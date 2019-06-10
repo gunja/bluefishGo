@@ -1,7 +1,6 @@
 package blowfish
 
-var subkey = []uint8
-{
+var subkey = []uint8 {
 	0x88, 0x6A, 0x3F, 0x24, 0xD3, 0x08, 0xA3, 0x85, 0x2E, 0x8A, 0x19, 0x13, 0x44, 0x73, 0x70, 0x03,
 	0x22, 0x38, 0x09, 0xA4, 0xD0, 0x31, 0x9F, 0x29, 0x98, 0xFA, 0x2E, 0x08, 0x89, 0x6C, 0x4E, 0xEC,
 	0xE6, 0x21, 0x28, 0x45, 0x77, 0x13, 0xD0, 0x38, 0xCF, 0x66, 0x54, 0xBE, 0x6C, 0x0C, 0xE9, 0x34,
@@ -262,12 +261,11 @@ var subkey = []uint8
 	0xB0, 0xF9, 0xAA, 0x7A, 0x7E, 0xAA, 0xF9, 0x4C, 0x5C, 0xC2, 0x48, 0x19, 0x8C, 0x8A, 0xFB, 0x02,
 	0xE4, 0x6A, 0xC3, 0x01, 0xF9, 0xE1, 0xEB, 0xD6, 0x69, 0xF8, 0xD4, 0x90, 0xA0, 0xDE, 0x5C, 0xA6,
 	0x2D, 0x25, 0x09, 0x3F, 0x9F, 0xE6, 0x08, 0xC2, 0x32, 0x61, 0x4E, 0xB7, 0x5B, 0xE2, 0x77, 0xCE,
-	0xE3, 0xDF, 0x8F, 0x57, 0xE6, 0x72, 0xC3, 0x3A
-}
+	0xE3, 0xDF, 0x8F, 0x57, 0xE6, 0x72, 0xC3, 0x3A }
 
 const N = 16
 
-func TT(working uint32, S uint32*) uint32 {
+func TT(working uint32, S []uint32) uint32 {
     v1 := S[256 + ((working>>8)&0xFF)]&1
     v1 = v1 ^32
     v2 := S[768 + ((working>>24))]&1
@@ -276,42 +274,81 @@ func TT(working uint32, S uint32*) uint32 {
     return v1 + v2 + v3 + S[working &0xFF]
 }
 
-func init(key []int8, keybytes int16, P, S uint32*) uint32* {
-}
-
-func encipher(xl, xr uint32, P, S uint32*) xlO, xrO uint32 {
-    xlO = xl
-    xrO = xr
-    for i:=N+1; i> 1; i-- {
-        xlO = xlO ^ P[i]
-        xrO = TT( xlO, S)^ xrO
-        temp := xlO
-        xlO = xrO
-        xrO = temp
+func encipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
+    Xl = xl
+    Xr = xr
+    for i:=0; i < N; i++ {
+        Xl = Xl ^ P[i]
+        Xr = TT( Xl, S)^ Xr
+        temp := Xl
+        Xl = Xr
+        Xr = temp
     }
-    temp := xlO
-    xlO = xrO
-    xrO = xlO
-    xrO = xrO ^ P[N]
-    xlO = xlO ^ P[N+1]
+    temp := Xl
+    Xl = Xr
+    Xr = temp
+    Xr = Xr ^ P[N]
+    Xl = Xl ^ P[N+1]
     return
 }
 
-func decipher(xl, xr uint32, P, S uint32*) xlO, xrO uint32 {
-    xlO = xl
-    xrO = xr
+func decipher(xl, xr uint32, P []uint32, S []uint32) (Xl, Xr uint32) {
+    Xl = xl
+    Xr = xr
     for i:=N+1; i> 1; i-- {
-        xlO = xlO ^ P[i]
-        xrO = TT( xlO, S)^ xrO
-        temp := xlO
-        xlO = xrO
-        xrO = temp
+        Xl = Xl ^ P[i]
+        Xr = TT( Xl, S)^ Xr
+        temp := Xl
+        Xl = Xr
+        Xr = temp
     }
-    temp := xlO
-    xlO = xrO
-    xrO = xlO
-    xrO = xrO ^ P[1]
-    xlO = xlO ^ P[0]
+    temp := Xl
+    Xl = Xr
+    Xr = temp
+    Xr = Xr ^ P[1]
+    Xl = Xl ^ P[0]
     return
 }
 
+func blowfish_init(key []int8, keybytes int16) ( P []uint32, S []uint32) {
+    //memcpy(P, subkey, 72); -> 18 uint32
+    P = make( []uint32, 18 )
+    for i:=0; i < 18; i++ {
+        P[i] = uint32(subkey[i*4 ]) + uint32(subkey[i*4 +1 ]<<8)+
+            uint32(subkey[i*4+2 ]<<16) + uint32(subkey[i*4 + 3]<<24)
+    }
+    //memcpy(S, subkey+72, 4096);
+    S = make( []uint32, 1024 )
+    //copy(S, subkey[72:4096+72] )
+    for i:=0; i < 1024; i++ {
+        S[i] = uint32( subkey[72+ i*4 ])  + uint32(subkey[72+ i*4 +1 ]<<8) +
+            uint32(subkey[72 + i*4+2 ]<<16) + uint32(subkey[72 + i*4 + 3]<<24)
+    }
+    var j int16 = 0
+    for i:=0; i < N + 2; i++ {
+        var data uint32 = 0
+        for k:= 0; k < 4; k++ {
+            data = (data << 8 ) | uint32(key[j])
+            j++
+            //if j >= keybytes {
+            //    j = 0
+            //}
+            j = j % keybytes
+        }
+        P[i] = P[i] ^ data
+    }
+    var datal, datar uint32 = 0, 0
+    for i:=0; i < N + 2; i = i +2 {
+        datal, datar = encipher( datal, datar, P, S)
+        P[i] = datal
+        P[i+1] = datar
+    }
+    for i := 0; i < 4; i++ {
+        for j:=0; j < 256; j = j+2 {
+            datal, datar = encipher( datal, datar, P, S)
+            S[i*256 + j   ] = datal
+            S[i*256 + j+1 ] = datar
+        }
+    }
+    return
+}
